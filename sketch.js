@@ -1,16 +1,16 @@
-var emotion_data; 
-var N = 500;
+var emotion_data; // json data is stored in here
+var N = 500; // number of circles drawn
 var sentence = "Fear is a strange soil. It grows obedience like corn, which grow in straight lines to make weeding easier. But sometimes it grows the potatoes of defiance, which flourish underground."
 
 var emotions = {
-  anger: 0,
-  anticipation: 0,
-  disgust: 0,
-  fear: 0,
-  joy: 0,
-  sadness: 0,
-  surprise: 0,
-  trust: 0,
+  anger: 0, // negative
+  anticipation: 0, // positive
+  disgust: 0, // negative
+  fear: 0, // negative
+  joy: 0, // positive
+  sadness: 0, // negative
+  surprise: 0, // positive
+  trust: 0, // positive
   positive: 0,
   negative: 0
 };
@@ -27,6 +27,8 @@ var emotion_hue_range = {
   positive: [85, 100], // high brightness
   negative: [60, 80] // low brightness
 };
+
+var positive_emotions = ["anticipation", "joy", "surprise", "trust"];
 
 
 var punctuationless = sentence.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
@@ -59,7 +61,7 @@ function update_emotions() {
       }
     }
   }
-  console.log(emotions);
+  console.log(JSON.stringify(emotions, null, 4));
 }
 
 function get_normalize_factor() {
@@ -86,31 +88,46 @@ function get_emotion_count() {
   return count;
 }
 
+function draw_circle(h, s, b, a) {
+  fill(h, s, b, a);
+  ellipse(random(windowWidth), random(windowHeight), random(100));
+}
+
 function draw_circles() {
-  var b = 80; // todo: change to non-hardcoded
-  if (emotions.negative > emotions.positive) {
-    b = random(20) + 60;
-  }
-  if (emotions.positive > emotions.negative) {
-    b = random(15) + 85;
-  }
+  var used = [];
+  var ratios = [];
   for (var el in emotions) {
     if (!(el === "positive" || el === "negative")) {
       if (emotions[el] > 0) {
-        var ratio = emotions[el] / get_normalize_factor();
-        var ncircles = Math.floor(N / get_emotion_count());
-        for (let i=0; i < ncircles; i++) {
-          var h_range = emotion_hue_range[el]; 
-          var h = random(h_range[1] - h_range[0]) + h_range[0];
-          var a = random(0.5)
-          if (ratio > 0.5) {
-            a += 0.5;
-          }
-          fill(h, random(75)+25, b, a);
-          ellipse(random(windowWidth), random(windowHeight), random(100));
-        }
+        let ratio = emotions[el] / get_normalize_factor();
+        // add emotion : ratio to list
+        used.push(el);
+        ratios.push(ratio);
       }
     }
   }
+  for (let i = 0; i < N; i++) {
+    var idx = i % used.length;
+    el = used[idx];
+    let ratio = ratios[idx];
+    var h_range = emotion_hue_range[el]; 
+    var h = random(h_range[1] - h_range[0]) + h_range[0];
+    var a = random(0.5)
+    if (ratio > 0.333) {
+      a += 0.5;
+    }
+    var b = 80;
+    if (emotions.negative > emotions.positive) {
+      b = random(20) + 60;
+    }
+    if (emotions.positive > emotions.negative) {
+      b = random(15) + 85;
+    }
+    if (!(positive_emotions.includes(el))) {
+      b -= 10;
+    } else {
+      b += 10;
+    }
+    draw_circle(h, random(75)+25, b, a);
+  }
 }
-
